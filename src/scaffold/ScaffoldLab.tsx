@@ -71,6 +71,8 @@ export default function ScaffoldLab({ presetId, onPreset }: { presetId: string; 
     return () => ro.disconnect();
   }, [view0.w, view0.h]);
   const u = (px: number) => px / scale;
+  const coarse = typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches;
+  const hitPx = coarse ? 22 : 10; // radius of the invisible grab area around each vertex
   const drag = useRef<{ kind: 'o' | 'h'; hole: number; i: number } | null>(null);
   const toWorld = (e: React.PointerEvent | React.MouseEvent): Pt => {
     const svg = svgRef.current!;
@@ -245,31 +247,44 @@ export default function ScaffoldLab({ presetId, onPreset }: { presetId: string; 
                   })}
                   {spec.outline.map((p, i) =>
                     i === 0 ? null : (
-                      <circle
-                        key={'v' + i}
-                        cx={p[0]} cy={p[1]} r={i === 1 ? 3 : 2.6}
-                        fill="var(--panel)" stroke="#000" strokeWidth={1} vectorEffect="non-scaling-stroke"
-                        style={{ cursor: i === 1 ? 'ew-resize' : 'grab' }}
-                        onPointerDown={(e) => {
-                          (e.target as Element).setPointerCapture?.(e.pointerId);
-                          drag.current = { kind: 'o', hole: -1, i };
-                        }}
-                        onDoubleClick={() => deleteVertex(i)}
-                      />
+                      <g key={'v' + i}>
+                        {/* invisible, larger touch target; the dot itself is unchanged */}
+                        <circle
+                          cx={p[0]} cy={p[1]} r={u(hitPx)}
+                          fill="transparent"
+                          style={{ cursor: i === 1 ? 'ew-resize' : 'grab' }}
+                          onPointerDown={(e) => {
+                            (e.target as Element).setPointerCapture?.(e.pointerId);
+                            drag.current = { kind: 'o', hole: -1, i };
+                          }}
+                          onDoubleClick={() => deleteVertex(i)}
+                        />
+                        <circle
+                          cx={p[0]} cy={p[1]} r={i === 1 ? 3 : 2.6}
+                          fill="var(--panel)" stroke="#000" strokeWidth={1} vectorEffect="non-scaling-stroke"
+                          pointerEvents="none"
+                        />
+                      </g>
                     ),
                   )}
                   {spec.holes.map((h, hi) =>
                     h.map((p, i) => (
-                      <circle
-                        key={`h${hi}-${i}`}
-                        cx={p[0]} cy={p[1]} r={1.8}
-                        fill="var(--panel)" stroke="#000" strokeWidth={1} vectorEffect="non-scaling-stroke"
-                        style={{ cursor: 'grab' }}
-                        onPointerDown={(e) => {
-                          (e.target as Element).setPointerCapture?.(e.pointerId);
-                          drag.current = { kind: 'h', hole: hi, i };
-                        }}
-                      />
+                      <g key={`h${hi}-${i}`}>
+                        <circle
+                          cx={p[0]} cy={p[1]} r={u(hitPx * 0.7)}
+                          fill="transparent"
+                          style={{ cursor: 'grab' }}
+                          onPointerDown={(e) => {
+                            (e.target as Element).setPointerCapture?.(e.pointerId);
+                            drag.current = { kind: 'h', hole: hi, i };
+                          }}
+                        />
+                        <circle
+                          cx={p[0]} cy={p[1]} r={1.8}
+                          fill="var(--panel)" stroke="#000" strokeWidth={1} vectorEffect="non-scaling-stroke"
+                          pointerEvents="none"
+                        />
+                      </g>
                     )),
                   )}
                 </g>
@@ -331,23 +346,27 @@ const halo = (u: (px: number) => number) => ({
 /** each pin's share of the impact, written under the pin inside A (100% = fair share) */
 function PinShares({ pinX, r, T, effMin, u }: { pinX: [number, number][]; r: number[]; T: number; effMin: number; u: (px: number) => number }) {
   const n = pinX.length;
+  // shrink the numbers on small screens so neighbours never touch (11px at most)
+  const pitchPx = (n > 1 ? pinX[1][0] - pinX[0][0] : 2 * (pinX[0][1] - pinX[0][0])) / u(1);
   return (
     <g>
       {pinX.map(([a, b], i) => {
         const v = r[i] * n;
+        const label = `${Math.round(Math.max(0, v) * 100)}%`;
+        const fs = Math.min(11, (pitchPx * 0.9) / (0.85 * label.length)); // Verdana bold digits are ~0.8em wide
         return (
           <text
             key={i}
             transform="scale(1,-1)"
             x={(a + b) / 2}
-            y={T + u(17)}
-            fontSize={u(11)}
+            y={T + u(6) + u(fs)}
+            fontSize={u(fs)}
             fontWeight={700}
             textAnchor="middle"
             fill={v >= effMin ? 'var(--ok)' : 'var(--bad)'}
             {...(v >= effMin ? halo(u) : {})}
           >
-            {Math.round(Math.max(0, v) * 100)}%
+            {label}
           </text>
         );
       })}

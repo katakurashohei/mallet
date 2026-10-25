@@ -10,7 +10,7 @@ export default function App() {
     <>
       <div className="wrap">
         <nav className="sitenav">
-          <a href="#scaffold">trapezoidal scaffolding</a> &nbsp;|&nbsp; <a href="#assembly">constrain-before-insertion</a>
+          <a href="https://katakurashohei.me/">home</a> &nbsp;|&nbsp; <a href="#scaffold">trapezoidal scaffolding</a> &nbsp;|&nbsp; <a href="#assembly">constrain-before-insertion</a>
         </nav>
       </div>
 
@@ -21,6 +21,9 @@ export default function App() {
           solve shows how much of a strike there reaches each pin of the joint. If no edge works, the plate gets a
           sacrificial <b style={{ color: 'var(--scaffold-ink)' }}>trapezoid</b> with a flat 3&nbsp;cm target centred over the
           joint, attached by a break-away tab. Drag the vertices to try your own plate.
+        </p>
+        <p className="sec-intro">
+          <b>How to use:</b> drag the dots to reshape the plate; double-click an edge to add a dot, a dot to remove it.
         </p>
         <ScaffoldLab presetId={scaffoldPreset} onPreset={setScaffoldPreset} />
       </section>

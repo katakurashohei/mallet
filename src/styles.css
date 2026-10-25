@@ -147,8 +147,9 @@ details.more[open] summary { margin-bottom: 6px; }
 .compare button { text-align: left; }
 .compare b { display: block; font-size: 12pt; }
 .compare span { font-size: 8pt; }
-.player { display: flex; gap: 4px; align-items: center; }
+.player { display: flex; flex-wrap: wrap; gap: 4px; row-gap: 6px; align-items: center; }
 .player .check { margin-right: 8px; white-space: nowrap; }
-.player input[type='range'] { flex: 1; }
+/* the slider takes the rest of the line; on phones the controls wrap below the checkboxes */
+.player input[type='range'] { flex: 1 1 140px; min-width: 120px; }
 .lattice { width: 100%; display: block; }
 .readout > div > h4 { font-size: 9pt; margin-bottom: 4px; }
